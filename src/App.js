@@ -8,6 +8,7 @@ import { Edit, Delete } from '@mui/icons-material';
 const baseUrl = "http://localhost:3030/contactos";
 const crearUrl = "http://localhost:3030/crear-contactos";
 const ActualizarUrl = "http://localhost:3030/actualizar-contactos/";
+const EliminarUrl = "http://localhost:3030/eliminar-contacto/";
 
 // const Modal = styled.modal`
 //   position: absolute;
@@ -64,6 +65,7 @@ function App() {
   const [data, setData] = useState({ mensaje: "", contactos: [] });
   const [modalInsertar, setModalInsertar] = useState(false);
   const [modalEditar, setModalEditar] = useState(false);
+  const [modalEliminar, setModalEliminar] = useState(false);
 
   const [consolaSeleccionada, setConsolaSeleccionada] = useState({
     nombre: '',
@@ -105,7 +107,7 @@ function App() {
       .then(response => {
         var dataNueva = data;
         dataNueva.map(consola => {
-          if(consolaSeleccionada.id===consola.id){
+          if (consolaSeleccionada.id === consola.id) {
             consola.nombre = consolaSeleccionada.nombre;
             consola.apellido = consolaSeleccionada.apellido;
             consola.email = consolaSeleccionada.email;
@@ -115,8 +117,16 @@ function App() {
             consola.origen = consolaSeleccionada.origen;
           }
         })
-      setData(dataNueva);
-      abrirCerrarModalEditar();
+        setData(dataNueva);
+        abrirCerrarModalEditar();
+      })
+  }
+
+  const peticionDelete=async()=>{
+    await axios.delete(EliminarUrl+consolaSeleccionada.id)
+    .then(response=>{
+      setData(data.filter(consola=>consola.id!==consolaSeleccionada.id));
+      abrirCerrarModalEliminar();
     })
   }
 
@@ -128,9 +138,13 @@ function App() {
     setModalEditar(!modalEditar);
   }
 
+  const abrirCerrarModalEliminar = () => {
+    setModalEliminar(!modalEliminar);
+  }
+
   const seleccionarConsola = (consola, caso) => {
     setConsolaSeleccionada(consola);
-      (caso === 'Editar')&&setModalEditar(true)
+    (caso === 'Editar')?setModalEditar(true):abrirCerrarModalEliminar()
   }
 
   useEffect(() => {
@@ -155,8 +169,8 @@ function App() {
       <TextField name="origen" sx={inputMaterial} label="Origen" onChange={handleChange} />
       <br />
       <div align="right">
-        <Button color="primary" onClick={()=>peticionPost()}>Insertar</Button>
-        <Button onClick={()=>abrirCerrarModalInsertar()}>Cancelar</Button>
+        <Button color="primary" onClick={() => peticionPost()}>Insertar</Button>
+        <Button onClick={() => abrirCerrarModalInsertar()}>Cancelar</Button>
       </div>
     </Box>
   )
@@ -179,12 +193,21 @@ function App() {
       <TextField name="origen" sx={inputMaterial} label="Origen" onChange={handleChange} value={consolaSeleccionada && consolaSeleccionada.origen} />
       <br />
       <div align="right">
-        <Button color="primary" onClick={()=>peticionPut()}>Editar</Button>
-        <Button onClick={()=>abrirCerrarModalEditar()}>Cancelar</Button>
+        <Button color="primary" onClick={() => peticionPut()}>Editar</Button>
+        <Button onClick={() => abrirCerrarModalEditar()}>Cancelar</Button>
       </div>
     </Box>
   )
 
+  const bodyEliminar=(
+    <Box sx={style}>
+      <p>Estás seguro que deseas eliminar la consola <b>{consolaSeleccionada && consolaSeleccionada.nombre}</b> ? </p>
+      <div align="right">
+        <Button color="secondary" onClick={()=>peticionDelete()} >Sí</Button>
+        <Button onClick={()=>abrirCerrarModalEliminar()}>No</Button>
+      </div>
+    </Box>
+  )
   return (
     <div className="App">
       <TableContainer>
@@ -213,9 +236,9 @@ function App() {
                 <TableCell>{consola.tipo}</TableCell>
                 <TableCell>{consola.origen}</TableCell>
                 <TableCell>
-                  <Edit sx={iconos} onClick={()=>seleccionarConsola(consola, 'Editar')} />
+                  <Edit sx={iconos} onClick={() => seleccionarConsola(consola, 'Editar')} />
                   &nbsp;&nbsp;&nbsp;
-                  <Delete sx={iconos} />
+                  <Delete sx={iconos} onClick={() => seleccionarConsola(consola, 'Eliminar')} />
                 </TableCell>
               </TableRow>
             ))}
@@ -223,7 +246,7 @@ function App() {
         </Table>
       </TableContainer>
       <br />
-      <Button onClick={()=>abrirCerrarModalInsertar()}>Agregar</Button>
+      <Button onClick={() => abrirCerrarModalInsertar()}>Agregar</Button>
       <Modal
         open={modalInsertar}
         onClose={abrirCerrarModalInsertar}
@@ -235,6 +258,12 @@ function App() {
         open={modalEditar}
         onClose={abrirCerrarModalEditar}>
         {bodyEditar}
+      </Modal>
+
+      <Modal
+        open={modalEliminar}
+        onClose={abrirCerrarModalEliminar}>
+        {bodyEliminar}
       </Modal>
     </div >
   );
