@@ -2,44 +2,14 @@ import React, { useEffect, useState } from 'react';
 import './App.css';
 import axios from 'axios';
 import styled from '@emotion/styled'
-import { Table, TableContainer, TableHead, TableCell, TableBody, Modal, Box, Typography, TableRow, Button, TextField } from '@mui/material';
-import { Edit, Delete } from '@mui/icons-material';
+import { Table, Container, TableContainer, OutlinedInput, InputAdornment, TableHead, TableCell, TableBody, Modal, Box, Typography, TableRow, Button, TextField } from '@mui/material';
+import { Edit, Delete, AddTask, PersonAdd } from '@mui/icons-material';
+import { borderRadius } from '@mui/system';
 
 const baseUrl = "http://localhost:3030/contactos";
 const crearUrl = "http://localhost:3030/crear-contactos";
 const ActualizarUrl = "http://localhost:3030/actualizar-contactos/";
 const EliminarUrl = "http://localhost:3030/eliminar-contacto/";
-
-// const Modal = styled.modal`
-//   position: absolute;
-//   width: 400px;
-//   border: '2px solid #000';
-//   padding: theme.spacing(2, 4, 3);
-//   top: '50%';
-//   left: '50%';
-//   transform: 'translate(-50%, -50%)';
-// `;
-
-// const useStyles = makeStyles((theme) => ({
-//   modal: {
-//     position: 'absolute',
-//     width: 400,
-//     backgroundColor: theme.palette.background.paper,
-//     border: '2px solid #000',
-//     boxShadow: theme.shadows[5],
-//     padding: theme.spacing(2, 4, 3),
-//     top: '50%',
-//     left: '50%',
-//     transform: 'translate(-50%, -50%)'
-//   },
-//   iconos: {
-//     cursor: 'pointer'
-//   },
-//   inputMaterial: {
-//     width: '100%'
-//   }
-// }));
-
 
 const style = {
   position: 'absolute',
@@ -51,22 +21,39 @@ const style = {
   border: '2px solid #000',
   boxShadow: 24,
   p: 4,
+  backgroundColor: '#eeeeee'
 };
 
 const inputMaterial = {
-  width: '100%'
+  width: '100%',
+  margin: 1,
+  backgroundColor: '#fff'
+}
+
+const modal = {
+  backgroundColor: '#eeeeee'
+}
+
+const inputBuscar = {
+  width: '100%',
+  margin: 1,
+  backgroundColor: '#eeeeee'
 }
 
 const iconos = {
   cursor: 'pointer'
 }
 
+const tableRow = {
+  backgroundColor: '#eeeeee',
+  borderRadius: 30
+}
+
 function App() {
-  const [data, setData] = useState({ mensaje: "", contactos: [] });
+  const [data, setData] = useState({ mensaje: "", data: [] });
   const [modalInsertar, setModalInsertar] = useState(false);
   const [modalEditar, setModalEditar] = useState(false);
   const [modalEliminar, setModalEliminar] = useState(false);
-
   const [consolaSeleccionada, setConsolaSeleccionada] = useState({
     nombre: '',
     apellido: '',
@@ -83,7 +70,6 @@ function App() {
       ...prevState,
       [name]: value
     }))
-    console.log(consolaSeleccionada);
   }
 
   const peticionGet = async () => {
@@ -99,14 +85,16 @@ function App() {
         setData(data.concat(response.data))
         console.log(response.data);
         abrirCerrarModalInsertar()
+      }).catch(error => {
+        console.log(error)
       })
   }
 
   const peticionPut = async () => {
-    await axios.post(ActualizarUrl + consolaSeleccionada.id, consolaSeleccionada)
+    await axios.put(ActualizarUrl + consolaSeleccionada.id, consolaSeleccionada)
       .then(response => {
         var dataNueva = data;
-        dataNueva.map(consola => {
+        dataNueva.data.map(consola => {
           if (consolaSeleccionada.id === consola.id) {
             consola.nombre = consolaSeleccionada.nombre;
             consola.apellido = consolaSeleccionada.apellido;
@@ -122,12 +110,13 @@ function App() {
       })
   }
 
-  const peticionDelete=async()=>{
-    await axios.delete(EliminarUrl+consolaSeleccionada.id)
-    .then(response=>{
-      setData(data.filter(consola=>consola.id!==consolaSeleccionada.id));
-      abrirCerrarModalEliminar();
-    })
+  const peticionDelete = async () => {
+    await axios.delete(EliminarUrl + consolaSeleccionada.id)
+      .then(response => {
+        setData(data.filter(consola => consola.id !== consolaSeleccionada.id));
+        console.log(response.data)
+        abrirCerrarModalEliminar();
+      })
   }
 
   const abrirCerrarModalInsertar = () => {
@@ -144,7 +133,7 @@ function App() {
 
   const seleccionarConsola = (consola, caso) => {
     setConsolaSeleccionada(consola);
-    (caso === 'Editar')?setModalEditar(true):abrirCerrarModalEliminar()
+    (caso === 'Editar') ? setModalEditar(true) : abrirCerrarModalEliminar()
   }
 
   useEffect(() => {
@@ -199,54 +188,51 @@ function App() {
     </Box>
   )
 
-  const bodyEliminar=(
+  const bodyEliminar = (
     <Box sx={style}>
       <p>Estás seguro que deseas eliminar la consola <b>{consolaSeleccionada && consolaSeleccionada.nombre}</b> ? </p>
       <div align="right">
-        <Button color="secondary" onClick={()=>peticionDelete()} >Sí</Button>
-        <Button onClick={()=>abrirCerrarModalEliminar()}>No</Button>
+        <Button color="secondary" onClick={() => peticionDelete()} >Sí</Button>
+        <Button onClick={() => abrirCerrarModalEliminar()}>No</Button>
       </div>
     </Box>
   )
   return (
-    <div className="App">
+    <Container className="App" maxWidth="sm">
+      <div>
+        <OutlinedInput
+          label="Buscar"
+          id="outlined-start-adornment"
+          sx={inputBuscar}
+          endAdornment={<InputAdornment position="end">kg</InputAdornment>}
+        />
+      </div>
+      <h3>Listar Contactos</h3>
       <TableContainer>
         <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Apellido</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Telefono</TableCell>
-              <TableCell>Direccion</TableCell>
-              <TableCell>Tipo Cliente</TableCell>
-              <TableCell>Origen</TableCell>
-              <TableCell>Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-
           <TableBody>
-            {data.contactos.map(consola => (
-              <TableRow key={consola.id}>
-                <TableCell>{consola.nombre}</TableCell>
-                <TableCell>{consola.apellido}</TableCell>
-                <TableCell>{consola.email}</TableCell>
-                <TableCell>{consola.telefono}</TableCell>
-                <TableCell>{consola.direccion}</TableCell>
-                <TableCell>{consola.tipo}</TableCell>
-                <TableCell>{consola.origen}</TableCell>
+            {data.data.map(consola => (
+              <TableRow sx={tableRow} key={consola.id}>
                 <TableCell>
-                  <Edit sx={iconos} onClick={() => seleccionarConsola(consola, 'Editar')} />
+                  <b>{consola.nombre}</b>
+                  <br />
+                  {consola.telefono}
+                </TableCell>
+                <TableCell>
+                  <Edit color="primary" sx={iconos} onClick={() => seleccionarConsola(consola, 'Editar')} />
                   &nbsp;&nbsp;&nbsp;
-                  <Delete sx={iconos} onClick={() => seleccionarConsola(consola, 'Eliminar')} />
+                  <AddTask color="primary" sx={iconos} />
+                  &nbsp;&nbsp;&nbsp;
+                  <Delete color="error" sx={iconos} onClick={() => seleccionarConsola(consola, 'Eliminar')} />
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
+
       <br />
-      <Button onClick={() => abrirCerrarModalInsertar()}>Agregar</Button>
+      <Button variant="contained" onClick={() => abrirCerrarModalInsertar()}>Agregar <PersonAdd p={4} /></Button>
       <Modal
         open={modalInsertar}
         onClose={abrirCerrarModalInsertar}
@@ -265,7 +251,7 @@ function App() {
         onClose={abrirCerrarModalEliminar}>
         {bodyEliminar}
       </Modal>
-    </div >
+    </Container>
   );
 }
 
