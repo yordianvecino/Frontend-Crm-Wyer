@@ -64,12 +64,30 @@ function App() {
     origen: '',
   })
 
+  const [buscar, setBuscar] =useState("");
+
   const handleChange = e => {
     const { name, value } = e.target;
     setConsolaSeleccionada(prevState => ({
       ...prevState,
       [name]: value
     }))
+  }
+
+  const handleChangeBuscar = e => {
+    setBuscar(e.target.value)
+    filtrar(e.target.value)
+  }
+
+  const filtrar=(terminoBusqueda)=>{
+    var resultadosBusqueda=data.data.filter((elemento)=>{
+      if(elemento.nombre.toString().toLowerCase().includes(terminoBusqueda.toLowerCase())
+      || elemento.telefono.nombre.toString().toLowerCase().includes(terminoBusqueda.toLowerCase())
+      ){
+        return elemento;
+      }
+    });
+    setData(resultadosBusqueda);
   }
 
   const peticionGet = async () => {
@@ -82,12 +100,12 @@ function App() {
   const peticionPost = async () => {
     await axios.post(crearUrl, consolaSeleccionada)
       .then(response => {
-        setData(data.concat(response.data))
         console.log(response.data);
         abrirCerrarModalInsertar()
       }).catch(error => {
         console.log(error)
       })
+    setData(data);
   }
 
   const peticionPut = async () => {
@@ -113,10 +131,10 @@ function App() {
   const peticionDelete = async () => {
     await axios.delete(EliminarUrl + consolaSeleccionada.id)
       .then(response => {
-        setData(data.filter(consola => consola.id !== consolaSeleccionada.id));
         console.log(response.data)
         abrirCerrarModalEliminar();
       })
+    setData(data);
   }
 
   const abrirCerrarModalInsertar = () => {
@@ -200,11 +218,19 @@ function App() {
   return (
     <Container className="App" maxWidth="sm">
       <div>
-        <OutlinedInput
+        <TextField
+          variant="outlined"
           label="Buscar"
           id="outlined-start-adornment"
           sx={inputBuscar}
-          endAdornment={<InputAdornment position="end">kg</InputAdornment>}
+          onChange={handleChangeBuscar}
+          endAdornment={<InputAdornment position="end">
+            <Edit
+              aria-label="toggle password visibility"
+              edge="end"
+            >
+            </Edit>
+          </InputAdornment>}
         />
       </div>
       <h3>Listar Contactos</h3>
@@ -232,7 +258,7 @@ function App() {
       </TableContainer>
 
       <br />
-      <Button variant="contained" onClick={() => abrirCerrarModalInsertar()}>Agregar <PersonAdd p={4} /></Button>
+      <Button variant="contained" onClick={() => abrirCerrarModalInsertar()}>Agregar &nbsp;<PersonAdd /></Button>
       <Modal
         open={modalInsertar}
         onClose={abrirCerrarModalInsertar}
